@@ -81,8 +81,9 @@ while True:
     cv2.imshow("depth", depth_col)
     cv2.imshow("color", color_img)
     cv2.waitKey(1)
-    file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")+"combined.mp4"
-    cv2.imwrite(file_name + "_depth.jpg", depth_col)
-    cv2.imwrite(file_name + "_color.jpg", color_img)
+    if cp["save_images"] == "True":
+        file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
+        cv2.imwrite("data/" + file_name + "_depth.jpg", depth_col)
+        cv2.imwrite("data/" + file_name + "_color.jpg", color_img)
     time.sleep(2)
 

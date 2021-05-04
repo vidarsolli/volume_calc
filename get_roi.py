@@ -104,7 +104,7 @@ while True:
 
 
 # if there are two reference points, then crop the region of interest
-# from teh image and display it
+# from the image and display it
 if len(refPt) >= 2:
     cp["roi"] = list()
     print("Number og rectangles: ", no_of_rois)

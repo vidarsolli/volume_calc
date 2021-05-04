@@ -2,6 +2,7 @@
     "image_height": 480,
     "image_width": 640,
     "fps": 60,
+    "save_images": "True",
     "possible_processes": [
         "None",
         "cvtColor",
