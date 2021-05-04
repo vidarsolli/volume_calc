@@ -1,0 +1,63 @@
+{
+    "image_height": 480,
+    "image_width": 640,
+    "fps": 60,
+    "possible_processes": [
+        "None",
+        "cvtColor",
+        "GaussianBlur",
+        "Canny",
+        "dilate",
+        "adaptiveThreshold",
+        "HoughLines",
+        "Properties",
+        "findContours",
+        "boundingRect",
+        "threshold",
+        "configure"
+    ],
+    "canny_thresh1": 0,
+    "canny_thresh2": 80,
+    "canny_aperture_size": 3,
+    "canny_l2gradient": "False",
+    "blur_kernel_size": 11,
+    "bounding_rect_best_fit": "True",
+    "hough_pix_accuracy": 2,
+    "hough_ang_accuracy": 2,
+    "hough_min_length": 50,
+    "depth_filter": "True",
+    "max_depth": 0.98,
+    "min_depth": 0.5,
+    "trigger_height": 0.1,
+    "roi": [
+        [
+            213,
+            7,
+            467,
+            473
+        ],
+        [
+            295,
+            241,
+            393,
+            278
+        ]
+    ],
+    "xp_centre": 640,
+    "yp_centre": 360,
+    "z_centre": 1.0,
+    "x_rot": 4.7124,
+    "x_offset": -0.187,
+    "y_offset": -0.508,
+    "z_offset": -0.005,
+    "x_res": 0.001066,
+    "y_res": 0.001087,
+    "xp_dist": 400,
+    "yp_dist": 300,
+    "threshold_thresh": 50,
+    "threshold_max": 255,
+    "box_min_area": 200,
+    "process_chain": [
+        "configure"
+    ]
+}
