@@ -32,10 +32,13 @@ def encode_by_colorization(depth_frame, min_depth, max_depth, use_disparity=Fals
 
 class RealsenseCamera():
 
-    def __init__(self, fps, width, height):
+    def __init__(self, fps, width, height, roi=None, conv_dist=None):
         self.fps = fps
         self.width = width
         self.height = height
+        self.roi = roi
+        self.conv_dist = conv_dist
+        print(self.conv_dist)
 
     def grab(self):
         frames = self.pipeline.wait_for_frames()
@@ -48,8 +51,24 @@ class RealsenseCamera():
         depth_img = np.asanyarray(depth.get_data()) / 1000
         color_img = np.asanyarray(color.get_data())
         depth_col = encode_by_colorization(depth, 0.1, 1.0, True)
+        # Calculate true depth inside the roi
+        true_depth = np.zeros((depth_img.shape[0], depth_img.shape[1]), dtype=float)
+        for r in range(depth_img.shape[0]):
+            for c in range(depth_img.shape[1]):
+                d = depth.get_distance(c, r)
+                depth_point = rs.rs2_deproject_pixel_to_point(
+                    self.depth_intrin, [c, r], d)
+                true_depth[r,c] = depth_point[2]
 
-        return color_img, depth_img, depth_col
+        if self.roi:
+            depth_img = depth_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            color_img = color_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            depth_col = depth_col[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            true_height = true_depth[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            if self.conv_dist.shape is not None:
+                true_height = self.conv_dist - true_height
+
+        return color_img, depth_img, depth_col, true_height
 
     def start(self):
         self.pipeline = rs.pipeline()
@@ -72,6 +91,29 @@ class RealsenseCamera():
             self.fps,
         )
         self.pipeline.start(cfg)
+        # Retreive the first image and get internal references
+        frames = self.pipeline.wait_for_frames()
+        fs = self.align.process(frames)
+        depth = fs.get_depth_frame()
+        color = fs.get_color_frame()
+
+        self.dprofile = depth.get_profile()
+        print("Dprofile: ", self.dprofile)
+        self.cprofile = color.get_profile()
+        print("Cprofile: ", self.cprofile)
+
+        self.cvsprofile = rs.video_stream_profile(self.cprofile)
+        print("Cvsprofile: ", self.cvsprofile)
+        self.dvsprofile = rs.video_stream_profile(self.dprofile)
+        print("Dvsprofile: ", self.dvsprofile)
+
+        self.color_intrin = self.cvsprofile.get_intrinsics()
+        print("Color intrinsics: ", self.color_intrin)
+        self.depth_intrin = self.dvsprofile.get_intrinsics()
+        print("Depth intrinsics: ", self.depth_intrin)
+        self.extrin = self.dprofile.get_extrinsics_to(self.cprofile)
+        print("Extrinsics: ", self.extrin)
 
     def stop(self):
         self.pipeline.stop()
+

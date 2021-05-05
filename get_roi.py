@@ -4,6 +4,7 @@ import time
 import json
 import sys, getopt
 from camera import RealsenseCamera
+import numpy as np
 
 
 # initialize the list of reference points and boolean indicating
@@ -68,7 +69,7 @@ with open(config_file) as file:
 
 camera = RealsenseCamera(cp["fps"], cp["image_width"], cp["image_height"])
 camera.start()
-image, depth_img, _ = camera.grab()
+image, depth_img, _, _ = camera.grab()
 clone = image.copy()
 cv.namedWindow("image")
 cv.setMouseCallback("image", click_and_crop)
@@ -98,7 +99,7 @@ while True:
 
     # if the 'n' key is pressed, capture a new image and clear rois
     if key == ord("n"):
-        image, _ = camera.grab()
+        image, _, _, _ = camera.grab()
         no_of_rois = 0
         refPt = ()
 
@@ -120,3 +121,16 @@ if len(refPt) >= 2:
 
 # close all open windows
 cv.destroyAllWindows()
+
+print("Calculate distance to conveyor surface")
+roi = cp["roi"][0]
+conveyor_surface = np.zeros((cp["image_height"], cp["image_width"]), dtype=float)
+for i in range(10):
+    _, _, _, surface = camera.grab()
+    conveyor_surface += surface
+conveyor_surface = conveyor_surface / 10.0
+conveyor_surface = conveyor_surface[roi[1]:roi[3], roi[0]:roi[2]]
+
+np.save("conveyor_surface.npy", conveyor_surface)
+
+cp["image_width"], cp["image_height"]

@@ -55,12 +55,13 @@ sock.setsockopt_string(zmq.SUBSCRIBE, "")
 #data_sock.setsockopt(zmq.CONFLATE, 1)
 sock.connect("tcp://localhost:60001")
 
-
+conv_dist = np.load("conveyor_surface.npy")
+print(conv_dist[:,:])
 print("OpenCV version: ", cv2.__version__)
 height = cp["image_height"]
 width = cp["image_width"]
 fps = cp["fps"]
-camera = RealsenseCamera(fps, width, height)
+camera = RealsenseCamera(fps, width, height, cp["roi"][0], conv_dist)
 camera.start()
 
 for idx, process in enumerate(cp["process_chain"]):

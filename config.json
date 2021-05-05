@@ -2,7 +2,7 @@
     "image_height": 480,
     "image_width": 640,
     "fps": 60,
-    "save_images": "True",
+    "save_images": "False",
     "possible_processes": [
         "None",
         "cvtColor",
@@ -27,21 +27,21 @@
     "hough_ang_accuracy": 2,
     "hough_min_length": 50,
     "depth_filter": "True",
-    "max_depth": 0.98,
-    "min_depth": 0.5,
+    "max_depth": 0.5,
+    "min_depth": 0.1,
     "trigger_height": 0.1,
     "roi": [
         [
-            213,
-            7,
-            467,
-            473
+            327,
+            227,
+            422,
+            409
         ],
         [
-            295,
-            241,
-            393,
-            278
+            350,
+            360,
+            392,
+            388
         ]
     ],
     "xp_centre": 640,

@@ -19,19 +19,21 @@ def angle_cos(p0, p1, p2):
 
 def process_image(camera, cp, show_image):
     object_found = False
+    chk_roi = (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1],
+                       cp["roi"][1][2] - cp["roi"][0][0], cp["roi"][1][3] - cp["roi"][0][1])
+
     while not object_found:
-        color_img, depth_img, depth_col = camera.grab()
+        color_img, depth_img, depth_col, height = camera.grab()
         # Check if object on conveyor. ROI[1] is the check area
-        check_img = depth_img[cp["roi"][1][1]:cp["roi"][1][3], cp["roi"][1][0]:cp["roi"][1][2]]
-        height = cp["max_depth"] - check_img
-        height_sum = np.sum(height)
+        check_img = height[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2]]
+        height_sum = np.sum(check_img[:,:])
         height_avr = height_sum/(check_img.shape[0]*check_img.shape[1])
         if height_avr > cp["trigger_height"]:
             object_found = True
     print("Object detected, average height: ", height_avr)
-    color_img = color_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
-    depth_img = depth_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
-    depth_col = depth_col[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
+    #color_img = color_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
+    #depth_img = depth_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
+    #depth_col = depth_col[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
 
     """
     original_img = color_img.copy()
