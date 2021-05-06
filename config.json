@@ -27,21 +27,21 @@
     "hough_ang_accuracy": 2,
     "hough_min_length": 50,
     "depth_filter": "True",
-    "max_depth": 0.5,
+    "max_depth": 1.2,
     "min_depth": 0.1,
-    "trigger_height": 0.1,
+    "trigger_height": 0.05,
     "roi": [
         [
-            327,
-            227,
-            422,
-            409
+            160,
+            22,
+            414,
+            459
         ],
         [
-            350,
-            360,
-            392,
-            388
+            222,
+            248,
+            331,
+            286
         ]
     ],
     "xp_centre": 640,

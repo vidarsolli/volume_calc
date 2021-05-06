@@ -30,7 +30,7 @@ def process_image(camera, cp, show_image):
         height_avr = height_sum/(check_img.shape[0]*check_img.shape[1])
         if height_avr > cp["trigger_height"]:
             object_found = True
-    print("Object detected, average height: ", height_avr)
+    print("Object detected, average height: ", height_avr, np.max(check_img), np.min(check_img))
     #color_img = color_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
     #depth_img = depth_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
     #depth_col = depth_col[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]

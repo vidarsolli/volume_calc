@@ -55,20 +55,29 @@ class RealsenseCamera():
         true_depth = np.zeros((depth_img.shape[0], depth_img.shape[1]), dtype=float)
         for r in range(depth_img.shape[0]):
             for c in range(depth_img.shape[1]):
-                d = depth.get_distance(c, r)
-                depth_point = rs.rs2_deproject_pixel_to_point(
-                    self.depth_intrin, [c, r], d)
-                true_depth[r,c] = depth_point[2]
+                if depth_img[r, c] == 0.0 and self.conv_dist is not None:
+                    true_depth[r, c] = 0.0
+                else:
+                    d = depth.get_distance(c, r)
+                    depth_point = rs.rs2_deproject_pixel_to_point(
+                        self.depth_intrin, [c, r], d)
+                    true_depth[r,c] = depth_point[2]
+        true_height = true_depth
 
         if self.roi:
             depth_img = depth_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
             color_img = color_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
             depth_col = depth_col[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
-            true_height = true_depth[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
-            if self.conv_dist.shape is not None:
-                true_height = self.conv_dist - true_height
+            true_depth = true_depth[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            true_height = true_height[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            if self.conv_dist is not None:
+                for r in range(true_height.shape[0]):
+                    for c in range(true_height.shape[1]):
+                        if true_depth[r, c] != 0.0:
+                            true_height[r, c] = self.conv_dist[r, c] - true_depth[r, c]
 
         return color_img, depth_img, depth_col, true_height
+
 
     def start(self):
         self.pipeline = rs.pipeline()

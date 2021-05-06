@@ -125,11 +125,23 @@ cv.destroyAllWindows()
 print("Calculate distance to conveyor surface")
 roi = cp["roi"][0]
 conveyor_surface = np.zeros((cp["image_height"], cp["image_width"]), dtype=float)
-for i in range(10):
-    _, _, _, surface = camera.grab()
-    conveyor_surface += surface
-conveyor_surface = conveyor_surface / 10.0
+# Calculate average z-distance
+_, _, _, surface = camera.grab()
+n = 0
+average = 0.0
 conveyor_surface = conveyor_surface[roi[1]:roi[3], roi[0]:roi[2]]
+surface = surface[roi[1]:roi[3], roi[0]:roi[2]]
+print("Surface: ", np.max(surface), np.min(surface))
+for r in range(surface.shape[0]):
+    for c in range(surface.shape[1]):
+        if surface[r,c] != 0.0:
+            n += 1
+            average += surface[r,c]
+average = average/n
+print("Average depth: ", average)
+for r in range(surface.shape[0]):
+    for c in range(surface.shape[1]):
+        conveyor_surface[r, c] = average
 
 np.save("conveyor_surface.npy", conveyor_surface)
 

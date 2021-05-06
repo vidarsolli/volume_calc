@@ -79,12 +79,14 @@ while True:
                 cv2.namedWindow(str(idx) + "-" + process, cv2.WINDOW_NORMAL)
 
     color_img, depth_img, depth_col = process_image(camera, cp, True)
-    cv2.imshow("depth", depth_col)
-    cv2.imshow("color", color_img)
-    cv2.waitKey(1)
     if cp["save_images"] == "True":
         file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         cv2.imwrite("data/" + file_name + "_depth.jpg", depth_col)
         cv2.imwrite("data/" + file_name + "_color.jpg", color_img)
-    time.sleep(2)
+    cv2.rectangle(depth_col, (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1]),
+                  (cp["roi"][1][2]-cp["roi"][0][0], cp["roi"][1][3]-cp["roi"][0][1]), (0, 255, 0), 2)
+    cv2.imshow("depth", depth_col)
+    cv2.imshow("color", color_img)
+    cv2.waitKey(1)
+
 
