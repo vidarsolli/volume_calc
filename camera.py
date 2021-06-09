@@ -1,5 +1,6 @@
 import pyrealsense2 as rs
 import numpy as np
+import time
 
 
 def threshold(depth_frame, min_depth, max_depth):
@@ -40,41 +41,57 @@ class RealsenseCamera():
         self.conv_dist = conv_dist
         print(self.conv_dist)
 
-    def grab(self):
+    def grab_raw(self):
         frames = self.pipeline.wait_for_frames()
         fs = self.align.process(frames)
         depth = fs.get_depth_frame()
         color = fs.get_color_frame()
         if not depth or not color:
             return None, None
+        depth_img = np.asanyarray(depth.get_data()) / 1000
+        color_img = np.asanyarray(color.get_data())
+
+        if self.roi:
+            depth_img = depth_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            color_img = color_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+        return color_img, depth_img
+
+
+    def grab(self):
+        frames = self.pipeline.wait_for_frames()
+        fs = self.align.process(frames)
+        depth = fs.get_depth_frame()
+        color = fs.get_color_frame()
+        if not depth or not color:
+            return None, None, None, None
 
         depth_img = np.asanyarray(depth.get_data()) / 1000
         color_img = np.asanyarray(color.get_data())
         depth_col = encode_by_colorization(depth, 0.1, 1.0, True)
         # Calculate true depth inside the roi
-        true_depth = np.zeros((depth_img.shape[0], depth_img.shape[1]), dtype=float)
+        true_depth = np.zeros((depth_img.shape[0], depth_img.shape[1], 3), dtype=float)
         for r in range(depth_img.shape[0]):
             for c in range(depth_img.shape[1]):
                 if depth_img[r, c] == 0.0 and self.conv_dist is not None:
-                    true_depth[r, c] = 0.0
+                    true_depth[r, c, :] = 0.0, 0.0, 0.0
                 else:
                     d = depth.get_distance(c, r)
                     depth_point = rs.rs2_deproject_pixel_to_point(
                         self.depth_intrin, [c, r], d)
-                    true_depth[r,c] = depth_point[2]
-        true_height = true_depth
+                    true_depth[r,c, :] = depth_point[0], depth_point[1], depth_point[2]
+            true_height = true_depth
 
         if self.roi:
             depth_img = depth_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
             color_img = color_img[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
             depth_col = depth_col[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
-            true_depth = true_depth[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
-            true_height = true_height[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2]]
+            true_depth = true_depth[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2], :]
+            true_height = true_height[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2], :]
             if self.conv_dist is not None:
                 for r in range(true_height.shape[0]):
                     for c in range(true_height.shape[1]):
-                        if true_depth[r, c] != 0.0:
-                            true_height[r, c] = self.conv_dist[r, c] - true_depth[r, c]
+                        if true_depth[r, c, 2] != 0.0:
+                            true_height[r, c, 2] = self.conv_dist[r, c] - true_depth[r, c, 2]
 
         return color_img, depth_img, depth_col, true_height
 

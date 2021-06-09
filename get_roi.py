@@ -130,13 +130,13 @@ _, _, _, surface = camera.grab()
 n = 0
 average = 0.0
 conveyor_surface = conveyor_surface[roi[1]:roi[3], roi[0]:roi[2]]
-surface = surface[roi[1]:roi[3], roi[0]:roi[2]]
+surface = surface[roi[1]:roi[3], roi[0]:roi[2], :]
 print("Surface: ", np.max(surface), np.min(surface))
 for r in range(surface.shape[0]):
     for c in range(surface.shape[1]):
-        if surface[r,c] != 0.0:
+        if surface[r,c, 2] != 0.0:
             n += 1
-            average += surface[r,c]
+            average += surface[r,c, 2]
 average = average/n
 print("Average depth: ", average)
 for r in range(surface.shape[0]):

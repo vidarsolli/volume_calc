@@ -21,46 +21,43 @@ def process_image(camera, cp, show_image):
     object_found = False
     chk_roi = (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1],
                        cp["roi"][1][2] - cp["roi"][0][0], cp["roi"][1][3] - cp["roi"][0][1])
-
+    height = []
+    last_time = time.time()
     while not object_found:
-        color_img, depth_img, depth_col, height = camera.grab()
+        color_img, depth_img, depth_col, height = camera.grab_raw()
+        print("dt: ", time.time() - last_time)
+        last_time = time.time()
         # Check if object on conveyor. ROI[1] is the check area
-        check_img = height[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2]]
-        height_sum = np.sum(check_img[:,:])
+        check_img = height[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2], :]
+        height_sum = np.sum(check_img[:,:, 2])
         height_avr = height_sum/(check_img.shape[0]*check_img.shape[1])
         if height_avr > cp["trigger_height"]:
             object_found = True
     print("Object detected, average height: ", height_avr, np.max(check_img), np.min(check_img))
-    #color_img = color_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
-    #depth_img = depth_img[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
-    #depth_col = depth_col[cp["roi"][0][1]:cp["roi"][0][3], cp["roi"][0][0]:cp["roi"][0][2]]
-
-    """
-    original_img = color_img.copy()
-    i = 0
-    color_img = color_img[cp["roi"][i][1]:cp["roi"][i][3], cp["roi"][i][0]:cp["roi"][i][2]]
-    depth_img = depth_img[cp["roi"][i][1]:cp["roi"][i][3], cp["roi"][i][0]:cp["roi"][i][2]]
     # cv2.imshow("Temp1",color_img)
 
-    # remove ground and things above max height
-    new_height = np.abs(cp["roi"][i][1] - cp["roi"][i][3])
-    new_width = np.abs(cp["roi"][i][0] - cp["roi"][i][2])
-    depth = apply_colormap(depth_img)
-    # cv2.imshow("Temp2",depth)
+    # remove ground and find average height of object
+    avr_height = 0
+    n = 0
     if cp["depth_filter"] == "True":
-        for h in range(new_height):
-            for w in range(new_width):
-                if depth_img[h, w] > cp["max_depth"] or depth_img[h, w] < cp["min_depth"] or depth_img[h, w] == 0:
-                    color_img[h, w, :] = (0, 0, 0)
+        for r in range(height.shape[0]):
+            for c in range(height.shape[1]):
+                if height[r, c, 2] < cp["min_height"] or height[r, c, 2] == 0:
+                    color_img[r, c, :] = (0, 0, 0)
+                else:
+                    avr_height += height[r, c, 2]
+                    n += 1
+    avr_height = avr_height/n
 
     img = color_img.copy()
     contour = None
-    box = None
+    box = []
     cx = 0
     cy = 0
     dist = 0
     angr = 0.0
     for idx, process in enumerate(cp["process_chain"]):
+        """
         if process == "configure":
             cv2.circle(original_img, (int(original_img.shape[1] / 2), int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
             cv2.circle(original_img, (int(original_img.shape[1] / 2) + cp["xp_dist"], int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
@@ -68,6 +65,7 @@ def process_image(camera, cp, show_image):
             cv2.circle(original_img, (int(original_img.shape[1] / 2) - cp["xp_dist"], int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
             cv2.circle(original_img, (int(original_img.shape[1] / 2), int(original_img.shape[0] / 2) - cp["yp_dist"]), 2, (0, 0, 255), -1)
             img = original_img
+        """
         if process == "cvtColor":
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if process == "GaussianBlur":
@@ -111,10 +109,8 @@ def process_image(camera, cp, show_image):
                     box[1] = (x + w, y)
                     box[2] = (x + w, y + h)
                     box[3] = (x, y + h)
-                box_found = True
             else:
                 print("boundingRect, No contour avalable")
-
         if process == "HoughLines":
             # This returns an array of r and theta values
             imga = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -164,6 +160,15 @@ def process_image(camera, cp, show_image):
                     cy = int(M['m01'] / M['m00'])
                 rect = cv2.minAreaRect(contour)
                 (x, y), (width, height), ang = rect
+                print(box)
+                box_pos = []
+                box_pos.append([height[box[0][0],box[0][1],0], height[box[0][0],box[0][1],1]])
+                box_pos.append([height[box[1][0],box[1][1],0], height[box[1][0],box[1][1],1]])
+                box_pos.append([height[box[2][0],box[2][1],0], height[box[2][0],box[2][1],1]])
+                box_pos.append([height[box[3][0],box[3][1],0], height[box[3][0],box[3][1],1]])
+                print("Box pos: ", box_pos)
+                print("dimention: ", width, height, avr_height)
+                """
                 if width < height:
                     ang = ang - 90
                 #print("Rect: ", rect, ang)
@@ -184,10 +189,40 @@ def process_image(camera, cp, show_image):
                     dist = 0.0
 
                 # if np.sqrt(np.square(box[0][0]+np.square(box[1][0]))) > np.sqrt(np.square(box[0][0] + np.square(box[1][0])))
+                """
             else:
                 print("Properties, no contour available")
         if show_image:
             cv2.imshow(str(idx) + "-" + process, img)
             cv2.waitKey(1)
-    """
-    return color_img, depth_img, depth_col
+
+
+
+    #Calculate box properties
+    print("Calcutating final properties")
+    print(box)
+    box_dim = []
+    box_pos = []
+    if contour is not None:
+        M = cv2.moments(contour)
+        ang = 0.0
+        if M['m00'] != 0:
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+        rect = cv2.minAreaRect(contour)
+        (x, y), (rect_width, rect_height), ang = rect
+        box_pos.append([height[box[0][1], box[0][0], 0], height[box[0][1], box[0][0], 1]])
+        box_pos.append([height[box[1][1], box[1][0], 0], height[box[1][1], box[1][0], 1]])
+        box_pos.append([height[box[2][1], box[2][0], 0], height[box[2][1], box[2][0], 1]])
+        box_pos.append([height[box[3][1], box[3][0], 0], height[box[3][1], box[3][0], 1]])
+        rect_width = np.sqrt(abs(box_pos[0][0]-box_pos[1][0]) * abs(box_pos[0][0]-box_pos[1][0])
+                             + abs(box_pos[0][1]-box_pos[1][1]) * abs(box_pos[0][1]-box_pos[1][1]))
+        rect_length = np.sqrt(abs(box_pos[1][0]-box_pos[2][0]) * abs(box_pos[1][0]-box_pos[2][0])
+                             + abs(box_pos[1][1]-box_pos[2][1]) * abs(box_pos[1][1]-box_pos[2][1]))
+        box_dim = [rect_width, rect_length, avr_height]
+
+        print("Box pos: ", box_pos)
+        print("dimention: ", rect_width, rect_length, avr_height)
+
+
+    return color_img, depth_img, depth_col, box, box_dim

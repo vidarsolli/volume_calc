@@ -78,13 +78,25 @@ while True:
             for idx, process in enumerate(cp["process_chain"]):
                 cv2.namedWindow(str(idx) + "-" + process, cv2.WINDOW_NORMAL)
 
-    color_img, depth_img, depth_col = process_image(camera, cp, True)
+    color_img, depth_img, depth_col, box_pos, box_dim = process_image(camera, cp, True)
     if cp["save_images"] == "True":
         file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         cv2.imwrite("data/" + file_name + "_depth.jpg", depth_col)
         cv2.imwrite("data/" + file_name + "_color.jpg", color_img)
     cv2.rectangle(depth_col, (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1]),
                   (cp["roi"][1][2]-cp["roi"][0][0], cp["roi"][1][3]-cp["roi"][0][1]), (0, 255, 0), 2)
+    if len(box_pos) > 0:
+        cv2.drawContours(color_img, [box_pos], 0, (255, 0, 0), 2)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    if len(box_dim) > 0:
+        l_text = "Length: " + str(int(box_dim[0]*1000)) + " mm"
+        w_text = "Width: " + str(int(box_dim[1]*1000)) + " mm"
+        h_text = "Height: " + str(int(box_dim[2]*1000)) + " mm"
+        cv2.putText(color_img, l_text, (10, 30), font, 0.5, (255, 255, 255), 1)
+        cv2.putText(color_img, w_text, (10, 60), font, 0.5, (255, 255, 255), 1)
+        cv2.putText(color_img, h_text, (10, 90), font, 0.5, (255, 255, 255), 1)
+
     cv2.imshow("depth", depth_col)
     cv2.imshow("color", color_img)
     cv2.waitKey(1)

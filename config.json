@@ -1,7 +1,7 @@
 {
     "image_height": 480,
     "image_width": 640,
-    "fps": 60,
+    "fps": 30,
     "save_images": "False",
     "possible_processes": [
         "None",
@@ -30,18 +30,19 @@
     "max_depth": 1.2,
     "min_depth": 0.1,
     "trigger_height": 0.05,
+    "min_height": 0.04,
     "roi": [
         [
-            160,
+            152,
             22,
-            414,
-            459
+            431,
+            402
         ],
         [
-            222,
-            248,
-            331,
-            286
+            171,
+            211,
+            409,
+            262
         ]
     ],
     "xp_centre": 640,
@@ -55,10 +56,15 @@
     "y_res": 0.001087,
     "xp_dist": 400,
     "yp_dist": 300,
-    "threshold_thresh": 50,
+    "threshold_thresh": 10,
     "threshold_max": 255,
     "box_min_area": 200,
     "process_chain": [
-        "configure"
+        "cvtColor",
+        "GaussianBlur",
+        "threshold",
+        "Canny",
+        "findContours",
+        "boundingRect"
     ]
 }
