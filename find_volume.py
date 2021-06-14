@@ -17,24 +17,25 @@ def angle_cos(p0, p1, p2):
     d1, d2 = (p0-p1).astype('float'), (p2-p1).astype('float')
     return abs( np.dot(d1, d2) / np.sqrt( np.dot(d1, d1)*np.dot(d2, d2) ) )
 
-def process_image(camera, cp, show_image):
+def process_image(camera, cp, check_surface, show_image):
     object_found = False
     chk_roi = (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1],
                        cp["roi"][1][2] - cp["roi"][0][0], cp["roi"][1][3] - cp["roi"][0][1])
     height = []
     last_time = time.time()
     while not object_found:
-        color_img, depth_img, depth_col, height = camera.grab_raw()
-        print("dt: ", time.time() - last_time)
+        color_img, depth_img = camera.grab_raw()
         last_time = time.time()
         # Check if object on conveyor. ROI[1] is the check area
-        check_img = height[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2], :]
-        height_sum = np.sum(check_img[:,:, 2])
+        check_img = depth_img[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2]]
+        height_sum = np.sum(np.abs(check_img - check_surface))
         height_avr = height_sum/(check_img.shape[0]*check_img.shape[1])
+        print(height_avr)
         if height_avr > cp["trigger_height"]:
             object_found = True
     print("Object detected, average height: ", height_avr, np.max(check_img), np.min(check_img))
     # cv2.imshow("Temp1",color_img)
+    color_img, depth_img, depth_col, height = camera.grab()
 
     # remove ground and find average height of object
     avr_height = 0
@@ -87,9 +88,13 @@ def process_image(camera, cp, show_image):
             _, contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             # Find longes contour
             cont_idx = -1
+            # Select the contour with the largest area
+            max_area = 0.0
             for i, cont in enumerate(contours):
-                if cv2.contourArea(cont) > cp["box_min_area"]:
+                area = cv2.contourArea(cont)
+                if area > max_area:
                     cont_idx = i
+                    max_area = area
             if cont_idx != -1:
                 contour = contours[cont_idx]
                 pts = np.array(contour, dtype=np.int32)

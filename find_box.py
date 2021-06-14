@@ -56,7 +56,8 @@ sock.setsockopt_string(zmq.SUBSCRIBE, "")
 sock.connect("tcp://localhost:60001")
 
 conv_dist = np.load("conveyor_surface.npy")
-print(conv_dist[:,:])
+check_surface = np.load("check_surface.npy")
+
 print("OpenCV version: ", cv2.__version__)
 height = cp["image_height"]
 width = cp["image_width"]
@@ -78,7 +79,7 @@ while True:
             for idx, process in enumerate(cp["process_chain"]):
                 cv2.namedWindow(str(idx) + "-" + process, cv2.WINDOW_NORMAL)
 
-    color_img, depth_img, depth_col, box_pos, box_dim = process_image(camera, cp, True)
+    color_img, depth_img, depth_col, box_pos, box_dim = process_image(camera, cp, check_surface, True)
     if cp["save_images"] == "True":
         file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         cv2.imwrite("data/" + file_name + "_depth.jpg", depth_col)

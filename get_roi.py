@@ -126,11 +126,12 @@ print("Calculate distance to conveyor surface")
 roi = cp["roi"][0]
 conveyor_surface = np.zeros((cp["image_height"], cp["image_width"]), dtype=float)
 # Calculate average z-distance
-_, _, _, surface = camera.grab()
+_, depth, _, surface = camera.grab()
 n = 0
 average = 0.0
 conveyor_surface = conveyor_surface[roi[1]:roi[3], roi[0]:roi[2]]
 surface = surface[roi[1]:roi[3], roi[0]:roi[2], :]
+
 print("Surface: ", np.max(surface), np.min(surface))
 for r in range(surface.shape[0]):
     for c in range(surface.shape[1]):
@@ -145,4 +146,7 @@ for r in range(surface.shape[0]):
 
 np.save("conveyor_surface.npy", conveyor_surface)
 
-cp["image_width"], cp["image_height"]
+# Save the raw depth for package present checking area
+roi_check = cp["roi"][1]
+check_surface = depth[roi_check[1]:roi_check[3], roi_check[0]:roi_check[2]]
+np.save("check_surface.npy", check_surface)

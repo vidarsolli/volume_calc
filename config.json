@@ -29,20 +29,20 @@
     "depth_filter": "True",
     "max_depth": 1.2,
     "min_depth": 0.1,
-    "trigger_height": 0.05,
-    "min_height": 0.04,
+    "trigger_height": 0.01,
+    "min_height": 0.03,
     "roi": [
         [
-            152,
-            22,
-            431,
-            402
+            150,
+            6,
+            425,
+            464
         ],
         [
-            171,
-            211,
-            409,
-            262
+            195,
+            111,
+            389,
+            131
         ]
     ],
     "xp_centre": 640,
