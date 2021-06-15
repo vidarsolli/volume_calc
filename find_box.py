@@ -87,6 +87,7 @@ while True:
     cv2.rectangle(depth_col, (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1]),
                   (cp["roi"][1][2]-cp["roi"][0][0], cp["roi"][1][3]-cp["roi"][0][1]), (0, 255, 0), 2)
     if len(box_pos) > 0:
+        print("Box pos: ", box_pos)
         cv2.drawContours(color_img, [box_pos], 0, (255, 0, 0), 2)
     font = cv2.FONT_HERSHEY_SIMPLEX
 

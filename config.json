@@ -22,7 +22,7 @@
     "canny_aperture_size": 3,
     "canny_l2gradient": "False",
     "blur_kernel_size": 11,
-    "bounding_rect_best_fit": "True",
+    "bounding_rect_best_fit": "False",
     "hough_pix_accuracy": 2,
     "hough_ang_accuracy": 2,
     "hough_min_length": 50,
@@ -61,8 +61,8 @@
     "box_min_area": 200,
     "process_chain": [
         "cvtColor",
-        "GaussianBlur",
         "threshold",
+        "GaussianBlur",
         "Canny",
         "findContours",
         "boundingRect"

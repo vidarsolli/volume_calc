@@ -18,23 +18,20 @@ def angle_cos(p0, p1, p2):
     return abs( np.dot(d1, d2) / np.sqrt( np.dot(d1, d1)*np.dot(d2, d2) ) )
 
 def process_image(camera, cp, check_surface, show_image):
+    # Check the ROI[1] area for objects.
+    # An object is detected if 10% of the pixels in the ROI[1] area are
+    # greater than "trigger_height".
     object_found = False
     chk_roi = (cp["roi"][1][0]-cp["roi"][0][0], cp["roi"][1][1]-cp["roi"][0][1],
                        cp["roi"][1][2] - cp["roi"][0][0], cp["roi"][1][3] - cp["roi"][0][1])
-    height = []
-    last_time = time.time()
     while not object_found:
         color_img, depth_img = camera.grab_raw()
-        last_time = time.time()
-        # Check if object on conveyor. ROI[1] is the check area
         check_img = depth_img[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2]]
-        height_sum = np.sum(np.abs(check_img - check_surface))
-        height_avr = height_sum/(check_img.shape[0]*check_img.shape[1])
-        print(height_avr)
-        if height_avr > cp["trigger_height"]:
-            object_found = True
-    print("Object detected, average height: ", height_avr, np.max(check_img), np.min(check_img))
-    # cv2.imshow("Temp1",color_img)
+        trigged_count = np.sum((check_surface - check_img) > cp["trigger_height"])
+        object_found = trigged_count > int(check_img.shape[0]*check_img.shape[1]*0.1)
+    print("Object detected, trigged cound: ", trigged_count, np.max(check_img), np.min(check_img))
+
+    # Get true height ( relative to the conveyor belt) of the object
     color_img, depth_img, depth_col, height = camera.grab()
 
     # remove ground and find average height of object
@@ -48,7 +45,8 @@ def process_image(camera, cp, check_surface, show_image):
                 else:
                     avr_height += height[r, c, 2]
                     n += 1
-    avr_height = avr_height/n
+    if n > 0:
+        avr_height = avr_height/n
 
     img = color_img.copy()
     contour = None
@@ -58,23 +56,17 @@ def process_image(camera, cp, check_surface, show_image):
     dist = 0
     angr = 0.0
     for idx, process in enumerate(cp["process_chain"]):
-        """
-        if process == "configure":
-            cv2.circle(original_img, (int(original_img.shape[1] / 2), int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
-            cv2.circle(original_img, (int(original_img.shape[1] / 2) + cp["xp_dist"], int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
-            cv2.circle(original_img, (int(original_img.shape[1] / 2), int(original_img.shape[0] / 2) + cp["yp_dist"]), 2, (0, 0, 255), -1)
-            cv2.circle(original_img, (int(original_img.shape[1] / 2) - cp["xp_dist"], int(original_img.shape[0] / 2)), 2, (0, 0, 255), -1)
-            cv2.circle(original_img, (int(original_img.shape[1] / 2), int(original_img.shape[0] / 2) - cp["yp_dist"]), 2, (0, 0, 255), -1)
-            img = original_img
-        """
+        # Convert color image to gray scale
         if process == "cvtColor":
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Make the image blurry
         if process == "GaussianBlur":
             img = cv2.GaussianBlur(img, (cp["blur_kernel_size"], cp["blur_kernel_size"]), 0)
         if process == "Canny":
             img = cv2.Canny(img, cp["canny_thresh1"], cp["canny_thresh2"])
         if process == "dilate":
             img = cv2.dilate(img, None)
+        #
         if process == "threshold":
             ret, img = cv2.threshold(img, cp["threshold_thresh"], cp["threshold_max"], cv2.THRESH_BINARY)
         if process == "adaptiveThreshold":
@@ -86,7 +78,7 @@ def process_image(camera, cp, check_surface, show_image):
             else:
                 img_gray = img.copy()
             _, contours, hierarchy = cv2.findContours(img_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            # Find longes contour
+            # Find longest contour
             cont_idx = -1
             # Select the contour with the largest area
             max_area = 0.0
@@ -110,10 +102,11 @@ def process_image(camera, cp, check_surface, show_image):
                 else:
                     x, y, w, h = cv2.boundingRect(contour)
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    box[0] = (x, y)
-                    box[1] = (x + w, y)
-                    box[2] = (x + w, y + h)
-                    box[3] = (x, y + h)
+                    box.append([x, y])
+                    box.append([x + w, y])
+                    box.append([x + w, y + h])
+                    box.append([x, y + h])
+                    box = np.asarray(box)
             else:
                 print("boundingRect, No contour avalable")
         if process == "HoughLines":
@@ -205,7 +198,16 @@ def process_image(camera, cp, check_surface, show_image):
 
     #Calculate box properties
     print("Calcutating final properties")
-    print(box)
+    print("Box coordinates: ", box)
+    print("Height dim: ", height.shape)
+    # Check if box dimensions are outside height area
+    for i in range(4):
+        if box[i][0] >= height.shape[1]:
+            box[i][0] = height.shape[1] - 1
+            print("Correcting box pos[0]")
+        if box[i][1] >= height.shape[0]:
+            box[i][1] = height.shape[0] - 1
+            print("Correcting box pos[1]")
     box_dim = []
     box_pos = []
     if contour is not None:
@@ -227,6 +229,7 @@ def process_image(camera, cp, check_surface, show_image):
         box_dim = [rect_width, rect_length, avr_height]
 
         print("Box pos: ", box_pos)
+        print("Box: ", box)
         print("dimention: ", rect_width, rect_length, avr_height)
 
 
