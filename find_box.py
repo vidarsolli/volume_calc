@@ -65,6 +65,8 @@ fps = cp["fps"]
 camera = RealsenseCamera(fps, width, height, cp["roi"][0], conv_dist)
 camera.start()
 
+cap = cv2.VideoCapture(0)
+
 for idx, process in enumerate(cp["process_chain"]):
     cv2.namedWindow(str(idx)+"-"+process, cv2.WINDOW_NORMAL)
 
@@ -101,6 +103,12 @@ while True:
 
     cv2.imshow("depth", depth_col)
     cv2.imshow("color", color_img)
+
+    ret, image = cap.read()
+    print("Image: ", type(image), image.shape, ret)
+    print("Image: ", type(color_img), color_img.shape, ret)
+    cv2.imshow("Extra camera", image)
+
     cv2.waitKey(1)
 
 
