@@ -30,11 +30,21 @@ def process_image(camera, cp, check_surface, show_image):
         trigged_count = np.sum((check_surface - check_img) > cp["trigger_height"])
         object_found = trigged_count > int(check_img.shape[0]*check_img.shape[1]*0.1)
     print("Object detected, trigged cound: ", trigged_count, np.max(check_img), np.min(check_img))
+    detection_time = time.time()
 
     # Get true height ( relative to the conveyor belt) of the object
     color_img, depth_img, depth_col, height = camera.grab()
 
-    # remove ground and find average height of object
+    # Wait for the object to leave the area
+    """
+    while object_found:
+        color_img, depth_img = camera.grab_raw()
+        check_img = depth_img[chk_roi[1]:chk_roi[3], chk_roi[0]:chk_roi[2]]
+        trigged_count = np.sum((check_surface - check_img) > cp["trigger_height"])
+        object_found = trigged_count > int(check_img.shape[0] * check_img.shape[1] * 0.1)
+    """
+
+    # remove background and find average height of object
     avr_height = 0
     n = 0
     if cp["depth_filter"] == "True":
@@ -233,4 +243,4 @@ def process_image(camera, cp, check_surface, show_image):
         print("dimention: ", rect_width, rect_length, avr_height)
 
 
-    return color_img, depth_img, depth_col, box, box_dim
+    return color_img, depth_img, depth_col, box, box_dim, detection_time

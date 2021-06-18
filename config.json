@@ -33,16 +33,16 @@
     "min_height": 0.03,
     "roi": [
         [
-            150,
-            6,
-            425,
-            464
+            4,
+            81,
+            623,
+            352
         ],
         [
-            195,
-            111,
-            389,
-            131
+            480,
+            132,
+            502,
+            299
         ]
     ],
     "xp_centre": 640,
@@ -66,5 +66,6 @@
         "Canny",
         "findContours",
         "boundingRect"
-    ]
+    ],
+    "image_directory": "/home/hsnews/projects/volume_calc/overview_images"
 }
