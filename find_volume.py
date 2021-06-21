@@ -93,14 +93,18 @@ def process_image(camera, cp, check_surface, show_image):
             # Select the contour with the largest area
             max_area = 0.0
             for i, cont in enumerate(contours):
-                area = cv2.contourArea(cont)
-                if area > max_area:
+                #area = cv2.contourArea(cont)
+                r = cv2.boundingRect(cont)
+                a = r[2] * r[3]
+                if a > max_area:
                     cont_idx = i
-                    max_area = area
+                    max_area = a
+                pts = np.array(cont, dtype=np.int32)
+                img = cv2.polylines(img, [pts], True, (255, 255, 255), 1)
             if cont_idx != -1:
                 contour = contours[cont_idx]
                 pts = np.array(contour, dtype=np.int32)
-                img = cv2.polylines(img, [pts], True, (127, 127, 127), 1)
+                img = cv2.polylines(img, [pts], True, (255, 255, 255), 2)
         if process == "boundingRect":
             if contour is not None:
                 img = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)

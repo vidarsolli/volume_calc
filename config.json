@@ -22,7 +22,7 @@
     "canny_aperture_size": 3,
     "canny_l2gradient": "False",
     "blur_kernel_size": 11,
-    "bounding_rect_best_fit": "False",
+    "bounding_rect_best_fit": "True",
     "hough_pix_accuracy": 2,
     "hough_ang_accuracy": 2,
     "hough_min_length": 50,
@@ -56,9 +56,10 @@
     "y_res": 0.001087,
     "xp_dist": 400,
     "yp_dist": 300,
-    "threshold_thresh": 10,
+    "threshold_thresh": 100,
     "threshold_max": 255,
     "box_min_area": 200,
+    "image_directory": "/home/hsnews/projects/volume_calc/overview_images",
     "process_chain": [
         "cvtColor",
         "threshold",
@@ -66,6 +67,5 @@
         "Canny",
         "findContours",
         "boundingRect"
-    ],
-    "image_directory": "/home/hsnews/projects/volume_calc/overview_images"
+    ]
 }

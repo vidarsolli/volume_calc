@@ -37,6 +37,8 @@ def send_file(host, port, img_dir):
                         # busy networks
                         print(f"Sending {len(bytes_read)} bytes")
                         conn.sendall(bytes_read)
+            time.sleep(0.2)
+            os.remove(os.path.join(img_dir, img_file))
             # break
 
 def send_json(host, port, msg_queue):
